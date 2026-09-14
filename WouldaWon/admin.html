@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>WouldaWon Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=IBM+Plex+Mono:wght@500;600&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{ --purple:#4a1f68; --purple-light:#5a2778; --orange:#f5a93b; --card:#ffffff; --ink:#241134; --ink-soft:#5c4a70; --muted:#8b7a9e; --card-edge:#e8e1f2; --red:#c73a35; --mint:#1fa98a; }
+  *{box-sizing:border-box;}
+  body{ background:var(--purple); color:var(--ink); font-family:'Work Sans', sans-serif; min-height:100vh; margin:0; padding:30px 16px; }
+  .wrap{ max-width:480px; margin:0 auto; }
+  h1{ font-family:'Fredoka',sans-serif; color:#fff; font-size:22px; margin:0 0 4px; }
+  .sub{ color:#d9c9ec; font-size:13px; margin:0 0 24px; }
+  .card{ background:var(--card); border-radius:16px; padding:22px; margin-bottom:16px; box-shadow:0 14px 30px -18px rgba(0,0,0,0.4); }
+  .card h2{ font-family:'Fredoka',sans-serif; font-size:16px; margin:0 0 14px; }
+  label{ display:block; font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.06em; text-transform:uppercase; color:var(--muted); margin-bottom:5px; margin-top:12px; }
+  label:first-child{ margin-top:0; }
+  input{ width:100%; padding:10px 12px; border:1px solid var(--card-edge); border-radius:8px; font-family:'IBM Plex Mono',monospace; font-size:14px; }
+  input:focus{ outline:2px solid var(--purple-light); }
+  .row3{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .row6{ display:grid; grid-template-columns:repeat(6,1fr); gap:6px; }
+  .row4{ display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
+  .row6 input, .row4 input{ padding:8px 6px; text-align:center; }
+  button{ margin-top:16px; width:100%; background:var(--orange); color:var(--ink); border:none; border-radius:9px; padding:13px; font-family:'Work Sans',sans-serif; font-weight:600; font-size:14px; cursor:pointer; }
+  button:hover{ filter:brightness(1.05); }
+  button:disabled{ opacity:0.5; cursor:not-allowed; }
+  .status{ font-size:12.5px; margin-top:10px; line-height:1.5; }
+  .status.ok{ color:var(--mint); }
+  .status.err{ color:var(--red); }
+  #mainPanels{ display:none; }
+  .hint{ font-size:11.5px; color:var(--muted); margin-top:4px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>WouldaWon Admin</h1>
+  <p class="sub">Not linked anywhere in the app. Bookmark this page — nobody finds it by browsing.</p>
+
+  <div class="card" id="loginCard">
+    <h2>Enter password</h2>
+    <label for="pwInput">Admin password</label>
+    <input type="password" id="pwInput" autocomplete="current-password">
+    <button id="loginBtn">Unlock</button>
+    <div class="status" id="loginStatus"></div>
+  </div>
+
+  <div id="mainPanels">
+    <div class="card">
+      <h2>Add a draw result</h2>
+      <label>Draw date</label>
+      <input type="date" id="drawDate">
+
+      <label>Main numbers (6, any order)</label>
+      <div class="row6">
+        <input type="number" min="1" max="40" id="m1"><input type="number" min="1" max="40" id="m2"><input type="number" min="1" max="40" id="m3">
+        <input type="number" min="1" max="40" id="m4"><input type="number" min="1" max="40" id="m5"><input type="number" min="1" max="40" id="m6">
+      </div>
+
+      <div class="row3">
+        <div><label>Bonus ball</label><input type="number" min="1" max="40" id="bonus"></div>
+        <div><label>Powerball (optional)</label><input type="number" min="1" max="10" id="pb"></div>
+        <div><label>Lotto jackpot $</label><input type="number" id="jackpot" placeholder="1000000"></div>
+      </div>
+
+      <label>Strike order (4 numbers, exact draw order — optional)</label>
+      <div class="row4">
+        <input type="number" min="1" max="40" id="s1"><input type="number" min="1" max="40" id="s2">
+        <input type="number" min="1" max="40" id="s3"><input type="number" min="1" max="40" id="s4">
+      </div>
+
+      <label>Total winners (optional)</label>
+      <input type="number" id="winners" placeholder="e.g. 335913">
+
+      <button id="submitDrawBtn">Save this draw</button>
+      <div class="status" id="drawStatus"></div>
+    </div>
+
+    <div class="card">
+      <h2>Update upcoming jackpots</h2>
+      <div class="row3">
+        <div><label>Powerball $</label><input type="number" id="pbJackpot" placeholder="20000000"></div>
+        <div><label>Strike 4 $</label><input type="number" id="strikeJackpot" placeholder="700000"></div>
+        <div><label>As of (date)</label><input type="date" id="jackpotAsOf"></div>
+      </div>
+      <button id="submitJackpotBtn">Save jackpot figures</button>
+      <div class="status" id="jackpotStatus"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  let password = null;
+
+  document.getElementById('loginBtn').addEventListener('click', ()=>{
+    const pw = document.getElementById('pwInput').value;
+    if(!pw){ return; }
+    password = pw;
+    document.getElementById('loginCard').style.display = 'none';
+    document.getElementById('mainPanels').style.display = 'block';
+    // Real validation happens server-side on first actual submit — this just
+    // moves you to the form. A wrong password will fail clearly on submit.
+  });
+
+  async function callAdmin(action, payload, statusElId, btnEl){
+    const statusEl = document.getElementById(statusElId);
+    btnEl.disabled = true;
+    statusEl.textContent = 'Saving…';
+    statusEl.className = 'status';
+    try{
+      const res = await fetch('/.netlify/functions/admin-update-results', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ password, action, payload })
+      });
+      const data = await res.json();
+      if(!res.ok){
+        statusEl.textContent = data.error || 'Something went wrong.';
+        statusEl.className = 'status err';
+        if(res.status === 401){
+          // wrong password — send back to login
+          document.getElementById('loginCard').style.display = 'block';
+          document.getElementById('mainPanels').style.display = 'none';
+        }
+      } else {
+        statusEl.textContent = data.message || 'Saved.';
+        statusEl.className = 'status ok';
+      }
+    } catch(err){
+      statusEl.textContent = 'Network error: ' + err.message;
+      statusEl.className = 'status err';
+    } finally {
+      btnEl.disabled = false;
+    }
+  }
+
+  document.getElementById('submitDrawBtn').addEventListener('click', ()=>{
+    const main = ['m1','m2','m3','m4','m5','m6'].map(id => Number(document.getElementById(id).value)).filter(n => n);
+    const strikeVals = ['s1','s2','s3','s4'].map(id => document.getElementById(id).value).filter(v => v !== '');
+    const strike = strikeVals.length === 4 ? strikeVals.map(Number) : null;
+
+    const payload = {
+      date: document.getElementById('drawDate').value,
+      main,
+      bonus: Number(document.getElementById('bonus').value),
+      pb: document.getElementById('pb').value,
+      strike,
+      jackpot: document.getElementById('jackpot').value,
+      winners: document.getElementById('winners').value
+    };
+
+    if(!payload.date || main.length !== 6 || !payload.bonus){
+      const statusEl = document.getElementById('drawStatus');
+      statusEl.textContent = 'Need a date, 6 main numbers, and a bonus ball at minimum.';
+      statusEl.className = 'status err';
+      return;
+    }
+
+    callAdmin('addDraw', payload, 'drawStatus', document.getElementById('submitDrawBtn'));
+  });
+
+  document.getElementById('submitJackpotBtn').addEventListener('click', ()=>{
+    const payload = {
+      powerballAmount: document.getElementById('pbJackpot').value,
+      strikeAmount: document.getElementById('strikeJackpot').value,
+      asOf: document.getElementById('jackpotAsOf').value
+    };
+    callAdmin('updateJackpots', payload, 'jackpotStatus', document.getElementById('submitJackpotBtn'));
+  });
+})();
+</script>
+</body>
+</html>

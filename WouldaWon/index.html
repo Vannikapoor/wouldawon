@@ -297,8 +297,13 @@
     .logo-mark{width:38px; height:38px;}
     .brand-text h1{font-size:20px;}
     .hero-sub{font-size:13px;}
-    .draw-row{gap:10px; margin-top:16px;}
-    .draw-card{min-width:0; width:100%; padding:14px 16px;}
+    .draw-row{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:14px;}
+    .draw-card{min-width:0; width:auto; padding:11px 12px;}
+    .draw-label{font-size:10px; margin-bottom:5px;}
+    .countdown{font-size:14px; gap:4px;}
+    .countdown .seg .u{font-size:8px;}
+    .jackpot-figure{font-size:15px;}
+    .jackpot-note{font-size:10px; line-height:1.35;}
     .countdown{font-size:18px; flex-wrap:wrap;}
     .jackpot-figure{font-size:19px;}
 
@@ -377,14 +382,14 @@
           <div class="jackpot-note">Guaranteed minimum every single draw — a genuine, stable fact, not an estimate.</div>
         </div>
         <div class="draw-card">
-          <div class="draw-label">Powerball Division 1 — next draw (Wed)</div>
-          <div class="jackpot-figure" id="pbJackpotFigure">$20 million</div>
-          <div class="jackpot-note" id="pbJackpotNote">Rolled over from Saturday's draw (not won). Confirmed 22 Aug 2026. <a href="#" id="refreshJackpotLink">Refresh with live figure →</a></div>
+          <div class="draw-label">Powerball Division 1 — <span id="pbNextDrawDay">next draw</span></div>
+          <div class="jackpot-figure" id="pbJackpotFigure">Loading…</div>
+          <div class="jackpot-note" id="pbJackpotNote"></div>
         </div>
         <div class="draw-card">
-          <div class="draw-label">Strike 4 — next draw (Wed)</div>
-          <div class="jackpot-figure">$700,000</div>
-          <div class="jackpot-note">Also rolled over from Saturday. Same confirmed date as above — check mylotto.co.nz for the latest.</div>
+          <div class="draw-label">Strike 4 — <span id="strikeNextDrawDay">next draw</span></div>
+          <div class="jackpot-figure" id="strikeJackpotFigure">Loading…</div>
+          <div class="jackpot-note" id="strikeJackpotNote"></div>
         </div>
       </div>
     </div>
@@ -407,7 +412,7 @@
           <button class="btn-simulate" id="checkRealBtn" style="background:var(--teal); color:#fff;" disabled>Check real result</button>
           <button class="btn-simulate" id="simulateBtn" disabled>Simulate instead</button>
         </div>
-        <div id="realCheckStatus" style="font-size:11px; color:var(--muted); text-align:right; max-width:340px; line-height:1.4;">"Check real result" fetches genuine numbers from a third-party results site. "Simulate instead" uses a random result if you'd rather not wait on that.</div>
+        <div id="realCheckStatus" style="font-size:11px; color:var(--muted); text-align:right; max-width:340px; line-height:1.4;">"Check real result" looks up the result the owner has entered for this draw in official-results.js. "Simulate instead" uses a random result if it hasn't been entered yet.</div>
       </div>
     </div>
 
@@ -536,13 +541,20 @@
   const PB_DIVIDENDS =    {1:4000000,2:100000,3:3000,4:300,5:100,6:50,7:20};
   const STRIKE_DIVIDENDS = {4:100000,3:700,2:20,1:0};
 
-  // ---------- Real recent draws (fetched at build time) ----------
-  const RECENT_DRAWS = [
-    {date:'Sat 22 Aug 2026', main:[3,14,20,22,37,40],  bonus:12, pb:5,  strike:[40,14,37,22], jackpot:1000000, winners:28187},
-    {date:'Wed 19 Aug 2026', main:[13,16,19,20,25,37], bonus:12, pb:10, strike:[13,20,19,37], jackpot:999999, winners:279732},
-    {date:'Sat 15 Aug 2026', main:[14,15,17,22,32,40], bonus:3,  pb:9,  strike:[22,14,32,40], jackpot:1000000, winners:322851},
-    {date:'Wed 12 Aug 2026', main:[2,8,13,19,28,39],  bonus:24, pb:9,  strike:[28,19,13,8],  jackpot:999999, winners:272382}
-  ];
+  // Recent draws, ticket-checking, and jackpot figures all read from
+  // official-results.json, fetched at startup. Updated either by hand or
+  // via the admin portal (admin.html + the update-results function) — both
+  // write to the same file, so either path works.
+  let officialData = { draws: {}, upcomingJackpots: {} };
+
+  async function loadOfficialResults(){
+    try{
+      const res = await fetch('official-results.json?_=' + Date.now()); // cache-bust so updates show immediately
+      officialData = await res.json();
+    } catch(err){
+      console.warn('Could not load official-results.json — Recent Draws, real result checking, and jackpot figures will be empty.', err);
+    }
+  }
 
   // ---------- Global ledger state ----------
   let balance=0, spent=0, won=0, ticketsBought=0, drawsChecked=0, bestResult=null;
@@ -648,6 +660,14 @@
     }
 
     document.getElementById('nextDrawDate').textContent = formatDrawLabel(nextDraw);
+
+    // Same real next-draw date feeds these two labels — Wed vs Sat can never drift
+    // out of sync with the countdown again, since there's only one source of truth now.
+    const nextDrawDayName = nextDraw.getDay() === 3 ? 'Wed' : 'Sat';
+    const pbLabel = document.getElementById('pbNextDrawDay');
+    const strikeLabel = document.getElementById('strikeNextDrawDay');
+    if(pbLabel) pbLabel.textContent = `next draw (${nextDrawDayName})`;
+    if(strikeLabel) strikeLabel.textContent = `next draw (${nextDrawDayName})`;
 
     const diff = nextDraw - n;
     const cd = document.getElementById('countdown');
@@ -782,47 +802,25 @@
     }, 650);
   });
 
-  document.getElementById('checkRealBtn').addEventListener('click', async function(){
+  function formatISODate(d){
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+
+  document.getElementById('checkRealBtn').addEventListener('click', function(){
     const totalPending = pending.lotto.length + pending.powerball.length + pending.strike.length;
     if(totalPending===0 || nowNZ() < activeDrawDate) return;
-    const btn=this;
     const status=document.getElementById('realCheckStatus');
-    btn.disabled=true;
-    btn.textContent='Checking…';
-    status.textContent='Fetching the latest real result…';
 
-    try{
-      const res = await fetch('/.netlify/functions/fetch-latest-draw');
-      if(!res.ok) throw new Error('Function returned ' + res.status);
-      const data = await res.json();
+    const key = formatISODate(activeDrawDate);
+    const entry = (officialData.draws || {})[key];
 
-      if(data.lotto?.error || !data.lotto?.main){
-        throw new Error(data.lotto?.error || 'Could not read the Lotto/Powerball result.');
-      }
-
-      const officialMain = data.lotto.main;
-      const officialBonus = data.lotto.bonus;
-      const officialPB = data.lotto.powerball;
-      const officialStrike = (data.strike && data.strike.order) ? data.strike.order : null;
-
-      if(data.jackpots?.powerball?.amount){
-        livePBJackpot = data.jackpots.powerball.amount;
-        updateJackpotCard(data.jackpots.powerball.display, 'Live as of this check.');
-      }
-
-      if(!officialStrike && pending.strike.length > 0){
-        status.textContent = 'Got real Lotto/Powerball, but the Strike result couldn\'t be read — Strike tickets will wait until next check.';
-      } else {
-        status.textContent = `Checked against real draw ${data.lotto.drawNumber || ''} (${data.lotto.date || 'date unknown'}).`;
-      }
-
-      resolveAgainstDraw(officialMain, officialBonus, officialPB, officialStrike, `Real result (draw ${data.lotto.drawNumber || '?'})`, /*strikeOnly if missing*/ officialStrike === null);
-    } catch(err){
-      status.textContent = 'Could not fetch a real result (' + err.message + '). You can try again, or use "Simulate instead."';
-    } finally {
-      btn.disabled = nowNZ() < activeDrawDate;
-      btn.textContent = 'Check real result';
+    if(!entry){
+      status.textContent = `No result entered yet for ${formatDrawLabel(activeDrawDate)}. Once it's added to official-results.js and redeployed, this'll work — or use "Simulate instead" for now.`;
+      return;
     }
+
+    status.textContent = `Checked against the entered result for ${formatDrawLabel(activeDrawDate)}.`;
+    resolveAgainstDraw(entry.main, entry.bonus, entry.pb, entry.strike, `Official result (${key})`, entry.strike === null);
   });
 
   function resolveAgainstDraw(officialMain, officialBonus, officialPB, officialStrikeOrder, sourceLabel, skipStrike){
@@ -1089,23 +1087,42 @@
 
   function renderRecentDraws(){
     const el = document.getElementById('recentDrawsList');
-    el.innerHTML = RECENT_DRAWS.map(d=>`
+    const drawsObj = officialData.draws || {};
+    const dateKeys = Object.keys(drawsObj).sort().reverse().slice(0, 4);
+
+    if(dateKeys.length === 0){
+      el.innerHTML = '<div class="empty-note">No results entered yet — add some to official-results.js.</div>';
+      return;
+    }
+
+    el.innerHTML = dateKeys.map(key=>{
+      const d = drawsObj[key];
+      const displayDate = formatShortDate(key);
+      return `
       <div class="recent-row">
         <div>
-          <div class="recent-date">${d.date}</div>
+          <div class="recent-date">${displayDate}</div>
           <div class="recent-balls">
             ${d.main.map(n=>`<div class="ticket-ball">${n}</div>`).join('')}
             <div class="ticket-ball" style="background:var(--gold); color:var(--ink);">${d.bonus}</div>
-            <div class="ticket-ball pb">${d.pb}</div>
+            ${d.pb !== null && d.pb !== undefined ? `<div class="ticket-ball pb">${d.pb}</div>` : `<div class="ticket-meta" style="align-self:center;">PB not confirmed</div>`}
           </div>
           <div class="ticket-meta" style="margin-top:8px;">Strike:
-            <span class="ticket-balls" style="display:inline-flex; gap:5px; vertical-align:middle; margin-left:4px;">
+            ${d.strike ? `<span class="ticket-balls" style="display:inline-flex; gap:5px; vertical-align:middle; margin-left:4px;">
               ${d.strike.map(n=>`<span class="ticket-ball" style="background:var(--teal-deep);">${n}</span>`).join('')}
-            </span>
+            </span>` : `<span style="font-style:italic;"> not confirmed for this draw</span>`}
           </div>
         </div>
         <div class="recent-jackpot">Lotto jackpot $${d.jackpot.toLocaleString()}<br>${d.winners.toLocaleString()} winners</div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
+  }
+
+  function formatShortDate(isoDate){
+    const d = new Date(isoDate + 'T12:00:00');
+    const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
   }
 
   // ---------- Fun pledge modal ----------
@@ -1125,7 +1142,11 @@
   // ---------- Init ----------
   buildFrequency();
   renderStats();
-  renderRecentDraws();
+  (async function(){
+    await loadOfficialResults();
+    renderRecentDraws();
+    renderJackpotCard();
+  })();
   const restored = loadState();
   if(!restored || !activeDrawDate){ activeDrawDate = computeNextDraw(); }
   renderAll();
@@ -1144,38 +1165,33 @@
     window.location.href = `mailto:kapoorsagar.nz@gmail.com?subject=${subject}&body=${body}`;
   });
 
-  function updateJackpotCard(display, noteText){
-    const note = document.getElementById('pbJackpotNote');
-    const figure = document.getElementById('pbJackpotFigure');
-    if(display) figure.textContent = display;
-    note.innerHTML = `${noteText} <a href="#" id="refreshJackpotLink2">Refresh again →</a>`;
-    document.getElementById('refreshJackpotLink2').addEventListener('click', (ev)=>{
-      ev.preventDefault();
-      fetchAndApplyJackpot();
-    });
-  }
+  function renderJackpotCard(){
+    const pbFigure = document.getElementById('pbJackpotFigure');
+    const pbNote = document.getElementById('pbJackpotNote');
+    const upcoming = officialData.upcomingJackpots || {};
+    const pb = upcoming.powerball;
 
-  async function fetchAndApplyJackpot(){
-    const note = document.getElementById('pbJackpotNote');
-    note.textContent = 'Fetching live figure…';
-    try{
-      const res = await fetch('/.netlify/functions/fetch-latest-draw');
-      const data = await res.json();
-      if(data.jackpots?.powerball?.amount){
-        livePBJackpot = data.jackpots.powerball.amount;
-        updateJackpotCard(data.jackpots.powerball.display, 'Live as of just now — this is now the real amount a Division 1 + Powerball win pays out below.');
-      } else {
-        note.innerHTML = `Couldn't read a live figure right now. <a href="https://www.mylotto.co.nz" target="_blank" rel="noopener">Check mylotto.co.nz →</a>`;
-      }
-    } catch(err){
-      note.innerHTML = `Live check failed. <a href="https://www.mylotto.co.nz" target="_blank" rel="noopener">Check mylotto.co.nz →</a>`;
+    if(pb && pb.amount){
+      livePBJackpot = pb.amount;
+      pbFigure.textContent = '$' + pb.amount.toLocaleString();
+      pbNote.textContent = `As entered by the owner, as of ${pb.asOf || 'an unspecified date'}. This is the real amount a Division 1 + Powerball win pays out below.`;
+    } else {
+      pbFigure.textContent = 'Not yet entered';
+      pbNote.innerHTML = `Add a figure to UPCOMING_JACKPOTS in official-results.js to show it here. <a href="https://www.mylotto.co.nz" target="_blank" rel="noopener">Check mylotto.co.nz →</a>`;
+    }
+
+    const strikeFigure = document.getElementById('strikeJackpotFigure');
+    const strikeNote = document.getElementById('strikeJackpotNote');
+    const strike = upcoming.strike;
+
+    if(strike && strike.amount){
+      strikeFigure.textContent = '$' + strike.amount.toLocaleString();
+      strikeNote.textContent = `As entered by the owner, as of ${strike.asOf || 'an unspecified date'}.`;
+    } else {
+      strikeFigure.textContent = 'Not yet entered';
+      strikeNote.innerHTML = `Add a figure to UPCOMING_JACKPOTS in official-results.js to show it here. <a href="https://www.mylotto.co.nz" target="_blank" rel="noopener">Check mylotto.co.nz →</a>`;
     }
   }
-
-  document.getElementById('refreshJackpotLink').addEventListener('click', (e)=>{
-    e.preventDefault();
-    fetchAndApplyJackpot();
-  });
 })();
 </script>
 </body>

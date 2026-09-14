@@ -1,0 +1,12 @@
+{
+  "draws": {
+    "2026-08-19": { "main": [13,16,19,20,25,37], "bonus": 12, "pb": 10, "strike": [13,20,19,37], "jackpot": 999999, "winners": 279732 },
+    "2026-08-22": { "main": [3,14,20,22,37,40], "bonus": 12, "pb": 5, "strike": [40,14,37,22], "jackpot": 1000000, "winners": 28187 },
+    "2026-08-26": { "main": [11,13,14,21,27,39], "bonus": 32, "pb": null, "strike": null, "jackpot": 1000000, "winners": 335913 },
+    "2026-08-29": { "main": [2,5,20,24,25,31], "bonus": 18, "pb": 5, "strike": null, "jackpot": 999999, "winners": 404803 }
+  },
+  "upcomingJackpots": {
+    "powerball": { "amount": null, "asOf": null },
+    "strike": { "amount": null, "asOf": null }
+  }
+}
