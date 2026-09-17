@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WouldaWon — Powerball & Strike Tracker</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='200' y2='200' gradientUnits='userSpaceOnUse'%3E%3Cstop offset='0' stop-color='%237a3fa0'/%3E%3Cstop offset='1' stop-color='%234a1f68'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='200' height='200' rx='46' fill='url(%23g)'/%3E%3Cpath d='M36 76 A96 96 0 0 1 168 52' stroke='%23F5A93B' stroke-width='11' fill='none' stroke-linecap='round'/%3E%3Ccircle cx='100' cy='112' r='54' fill='%23F7F2E2'/%3E%3Ccircle cx='163' cy='53' r='15' fill='%23D9AF3E'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="logo.svg">
+<link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22WouldaWon%22%2C%22short_name%22%3A%22WouldaWon%22%2C%22theme_color%22%3A%22%234a1f68%22%2C%22background_color%22%3A%22%23f5f2fa%22%2C%22display%22%3A%22standalone%22%7D">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=IBM+Plex+Mono:wght@500;600&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --purple:#4a1f68; --purple-deep:#301045; --purple-mid:#6a3591; --lav-bg:#f5f2fa;
+    --card:#ffffff; --card-edge:#e8e1f2; --ink:#241134; --ink-soft:#5c4a70;
+    --orange:#f5a93b; --orange-deep:#d98c1f; --gold:#d9af3e;
+    --red:#e0342b; --red-deep:#b8281f; --teal:#1fa98a; --teal-deep:#158a70;
+    --mint:#1fa98a; --deficit:#e0342b; --muted:#8b7a9e;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{ background:var(--lav-bg); color:var(--ink); font-family:'Work Sans', sans-serif; min-height:100vh; padding-bottom:80px; }
+  .wrap{max-width:980px; margin:0 auto; padding:0 20px;}
+
+  .hero{
+    background:
+      radial-gradient(900px 400px at 10% -20%, #6a3591 0%, transparent 60%),
+      radial-gradient(700px 400px at 100% -10%, #7a3fa0 0%, transparent 55%),
+      linear-gradient(180deg, var(--purple) 0%, var(--purple-deep) 100%);
+    color:#fff; padding:30px 0 34px; margin-bottom:24px;
+  }
+  header{display:flex; align-items:center; justify-content:space-between; gap:14px; margin-bottom:18px;}
+  .feedback-btn{
+    font-family:'Work Sans', sans-serif; font-weight:600; font-size:12.5px;
+    background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.22);
+    color:#fff; text-decoration:none; padding:8px 14px; border-radius:999px; white-space:nowrap;
+    transition:background 0.15s ease;
+  }
+  .feedback-btn:hover{background:rgba(255,255,255,0.2);}
+  .logo-mark{width:46px; height:46px; flex-shrink:0;}
+  .brand-text h1{font-family:'Fredoka', sans-serif; font-weight:700; font-size:24px; margin:0; letter-spacing:-0.01em;}
+  .brand-text .tag{font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--orange);}
+
+  .hero-sub{color:#d9c9ec; font-size:14px; max-width:600px; line-height:1.55; margin:0 0 6px;}
+  .disclaimer{ margin-top:10px; font-size:12px; color:#c9b6e0; border-left:2px solid var(--orange); padding-left:10px; max-width:600px; line-height:1.5; }
+
+  .draw-row{ display:flex; flex-wrap:wrap; gap:14px; margin-top:22px; }
+  .draw-card{ background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.16); border-radius:14px; padding:16px 18px; flex:1; min-width:220px; backdrop-filter:blur(2px); }
+  .draw-label{font-family:'IBM Plex Mono', monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--orange); margin-bottom:8px;}
+  .draw-date{font-family:'Fredoka', sans-serif; font-weight:600; font-size:17px; margin-bottom:4px;}
+  .countdown{ font-family:'IBM Plex Mono', monospace; font-size:22px; font-weight:600; color:#fff; display:flex; gap:8px; }
+  .countdown .seg{display:flex; flex-direction:column; align-items:center;}
+  .countdown .seg .n{animation:tick 1s ease infinite;}
+  @keyframes tick{ 0%{opacity:1;} 50%{opacity:0.55;} 100%{opacity:1;} }
+  .countdown .seg .u{font-size:9px; color:#c9b6e0; letter-spacing:0.06em;}
+  .jackpot-figure{font-family:'Fredoka', sans-serif; font-weight:700; font-size:22px; color:var(--gold);}
+  .jackpot-note{font-size:11px; color:#c9b6e0; margin-top:4px; line-height:1.4;}
+  .jackpot-note a{color:var(--orange);}
+
+  .balance-card{
+    background:var(--card); border:1px solid var(--card-edge); border-radius:18px; padding:24px 26px; margin:0 0 22px;
+    display:flex; flex-wrap:wrap; gap:20px; justify-content:space-between; align-items:center;
+    box-shadow:0 14px 30px -18px rgba(74,31,104,0.25);
+  }
+  .balance-label{font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); margin-bottom:8px;}
+  .balance-figure{font-family:'Fredoka', sans-serif; font-weight:700; font-size:clamp(30px,5vw,44px); line-height:1; transition:transform 0.2s ease;}
+  .balance-figure.surplus{color:var(--teal-deep);}
+  .balance-figure.deficit{color:var(--red);}
+  .balance-figure.even{color:var(--ink);}
+  .balance-figure.pulse{animation:pulse 0.5s ease;}
+  @keyframes pulse{ 0%{transform:scale(1);} 40%{transform:scale(1.08);} 100%{transform:scale(1);} }
+  .balance-meta{font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--muted); margin-top:8px;}
+  .mini-stats{display:flex; gap:22px; flex-wrap:wrap;}
+  .mini-stat{text-align:right;}
+  .mini-stat .n{font-family:'IBM Plex Mono', monospace; font-weight:600; font-size:19px; color:var(--ink);}
+  .mini-stat .l{font-size:10px; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); margin-top:4px;}
+
+  .simulate-row{width:100%; display:flex; justify-content:flex-end; align-items:center; gap:10px;}
+  .btn-simulate{
+    font-family:'Fredoka', sans-serif; font-weight:600; font-size:14.5px;
+    background:var(--orange); color:var(--ink); border:none; border-radius:10px; padding:13px 22px; cursor:pointer;
+  }
+  .btn-simulate:hover:not(:disabled){filter:brightness(1.06);}
+  .btn-simulate:disabled{opacity:0.4; cursor:not-allowed;}
+  .btn-simulate.rolling{animation:shake 0.4s ease infinite;}
+  @keyframes shake{ 0%,100%{transform:translateX(0);} 25%{transform:translateX(-2px);} 75%{transform:translateX(2px);} }
+
+  .tabs{display:flex; gap:6px; margin-bottom:18px; flex-wrap:wrap;}
+  .tab-btn{
+    font-family:'Fredoka', sans-serif; font-weight:600; font-size:13.5px;
+    background:var(--card); color:var(--ink); border:1px solid var(--card-edge);
+    border-radius:999px; padding:9px 18px; cursor:pointer; transition:transform 0.15s ease;
+  }
+  .tab-btn:hover{transform:translateY(-1px);}
+  .tab-btn .dot{display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:7px;}
+  .tab-btn[data-tab="powerball"] .dot{background:var(--red);}
+  .tab-btn[data-tab="strike"] .dot{background:var(--teal);}
+  .tab-btn[data-tab="stats"] .dot{background:var(--gold);}
+  .tab-btn[data-tab="recent"] .dot{background:var(--purple-mid);}
+  .tab-btn.active{background:var(--ink); color:#fff; border-color:var(--ink);}
+
+  .panel{display:none; animation:fadein 0.25s ease;}
+  .panel.active{display:block;}
+  @keyframes fadein{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);}}
+
+  .card{ background:var(--card); border:1px solid var(--card-edge); border-radius:16px; padding:22px 24px; margin-bottom:20px; box-shadow:0 10px 24px -20px rgba(74,31,104,0.3); }
+  .card h2{font-family:'Fredoka',sans-serif; font-weight:600; font-size:17px; margin:0 0 4px;}
+  .card-sub{color:var(--ink-soft); font-size:13px; margin:0 0 16px; line-height:1.5;}
+  .ticket-for-note{ font-family:'IBM Plex Mono', monospace; font-size:11.5px; color:var(--purple-mid); background:#f2ecfa; border-radius:8px; padding:8px 12px; margin-bottom:14px; display:inline-block; }
+
+  .mode-toggle{display:inline-flex; background:var(--lav-bg); border:1px solid var(--card-edge); border-radius:999px; padding:3px; margin-bottom:16px;}
+  .mode-btn{border:none; background:none; color:var(--ink-soft); font-family:'Work Sans', sans-serif; font-size:13px; font-weight:600; padding:7px 15px; border-radius:999px; cursor:pointer;}
+  .mode-btn.active{background:var(--gold); color:var(--ink);}
+
+  .ball-row{display:flex; gap:9px; flex-wrap:wrap; margin-bottom:18px; min-height:50px; align-items:center;}
+  .ball{
+    width:44px; height:44px; border-radius:50%; background:var(--orange); color:var(--ink);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'IBM Plex Mono', monospace; font-weight:600; font-size:15px;
+    box-shadow:inset 0 -3px 0 rgba(0,0,0,0.15), 0 4px 8px rgba(74,31,104,0.28);
+    opacity:0; transform:translateY(-20px) scale(0.5) rotate(-20deg);
+  }
+  .ball.show{animation:drop 0.5s cubic-bezier(.34,1.56,.64,1) forwards;}
+  @keyframes drop{ to{opacity:1; transform:translateY(0) scale(1) rotate(0);} }
+  .ball.pb{background:var(--red); color:#fff;}
+  .ball.strike-pos{background:var(--teal); color:#fff;}
+  .placeholder-text{color:var(--muted); font-size:13px; font-style:italic;}
+
+  .btn-row{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
+  .btn{font-family:'Work Sans', sans-serif; font-weight:600; font-size:14px; border-radius:9px; padding:11px 18px; cursor:pointer; border:none; transition:transform 0.15s ease;}
+  .btn:hover:not(:disabled){transform:translateY(-1px);}
+  .btn-gold{background:var(--gold); color:var(--ink);}
+  .btn-ghost{background:var(--ink); color:#fff;}
+  .btn:disabled{opacity:0.35; cursor:not-allowed; transform:none;}
+  .price-tag{font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--muted);}
+
+  .ticket{ background:var(--lav-bg); color:var(--ink); border-radius:10px; padding:13px 15px; display:flex; align-items:center; justify-content:space-between; gap:14px; margin-bottom:9px; border:1px dashed var(--purple-mid); }
+  .ticket-left{display:flex; align-items:center; gap:11px; flex-wrap:wrap;}
+  .ticket-balls{display:flex; gap:5px;}
+  .ticket-ball{ width:26px; height:26px; border-radius:50%; background:var(--purple); color:#fff; display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono', monospace; font-size:11px; font-weight:600; }
+  .ticket-ball.pb{background:var(--red);}
+  .ticket-meta{font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--muted); line-height:1.5;}
+  .ticket-result{font-family:'Work Sans', sans-serif; font-weight:600; font-size:12.5px; text-align:right; min-width:110px;}
+  .ticket-result.pending{color:var(--orange-deep);}
+  .empty-note{color:var(--muted); font-size:13px; font-style:italic; padding:6px 2px;}
+
+  .game-tag{ display:inline-block; font-family:'IBM Plex Mono', monospace; font-size:10px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; padding:3px 8px; border-radius:6px; color:#fff; }
+  .game-tag.powerball{background:var(--red-deep);}
+  .game-tag.strike{background:var(--teal-deep);}
+
+  .ticket.won{border-color:var(--teal-deep); background:#eefaf5;}
+  .ticket.lost{border-style:solid; opacity:0.85;}
+  .ticket-result.win{color:var(--teal-deep); font-weight:700;}
+  .ticket-result.lose{color:var(--muted);}
+
+  .ledger-entry{display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid var(--card-edge); font-family:'IBM Plex Mono', monospace; font-size:12.5px;}
+  .ledger-entry:last-child{border-bottom:none;}
+  .ledger-desc{color:var(--ink-soft);}
+  .ledger-amt.pos{color:var(--teal-deep);}
+  .ledger-amt.neg{color:var(--red);}
+
+  .freq-list{display:flex; flex-direction:column; gap:8px;}
+  .freq-row{display:flex; align-items:center; gap:10px;}
+  .freq-num{width:30px; height:30px; border-radius:50%; background:var(--purple); color:#fff; display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono', monospace; font-weight:600; font-size:12px; flex-shrink:0;}
+  .freq-bar-bg{flex:1; background:var(--lav-bg); border-radius:6px; height:10px; overflow:hidden;}
+  .freq-bar{height:100%; background:linear-gradient(90deg, var(--orange), var(--gold)); border-radius:6px; transition:width 0.6s ease;}
+  .freq-count{font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--muted); width:34px; text-align:right;}
+  .stats-two-col{display:grid; grid-template-columns:1fr 1fr; gap:24px;}
+  @media(max-width:640px){ .stats-two-col{grid-template-columns:1fr;} }
+
+  .recent-row{ display:flex; justify-content:space-between; align-items:center; padding:14px 0; border-bottom:1px solid var(--card-edge); }
+  .recent-row:last-child{border-bottom:none;}
+  .recent-date{font-family:'Fredoka', sans-serif; font-weight:600; font-size:14px; margin-bottom:6px;}
+  .recent-balls{display:flex; gap:5px; flex-wrap:wrap;}
+  .source-note{font-size:11.5px; color:var(--muted); margin-top:10px; line-height:1.5;}
+  .source-note a{color:var(--purple-mid);}
+
+  footer{margin-top:32px; color:var(--muted); font-size:12px; text-align:center; line-height:1.6;}
+
+  .pledge-overlay{ display:none; position:fixed; inset:0; background:rgba(24,10,36,0.72); z-index:1000; align-items:center; justify-content:center; padding:20px; backdrop-filter:blur(2px); }
+  .pledge-overlay.show{display:flex; animation:overlayFade 0.25s ease;}
+  @keyframes overlayFade{ from{opacity:0;} to{opacity:1;} }
+  .pledge-card{ background:var(--card); color:var(--ink); border-radius:20px; padding:30px 28px; max-width:440px; width:100%; text-align:center; box-shadow:0 30px 70px -20px rgba(24,10,36,0.5); animation:pledgeIn 0.4s cubic-bezier(.34,1.56,.64,1); max-height:90vh; overflow-y:auto; }
+  @keyframes pledgeIn{ from{opacity:0; transform:translateY(24px) scale(0.92);} to{opacity:1; transform:translateY(0) scale(1);} }
+  .pledge-emoji{font-size:44px; margin-bottom:6px; animation:pledgeBounce 1.2s ease infinite;}
+  @keyframes pledgeBounce{ 0%,100%{transform:translateY(0);} 50%{transform:translateY(-8px);} }
+  .pledge-card h2{font-family:'Fredoka', sans-serif; font-weight:700; font-size:22px; margin:0 0 14px;}
+  .pledge-card p{font-size:14px; line-height:1.6; margin:0 0 12px; color:var(--ink-soft);}
+  .pledge-fine-print{font-size:11.5px; color:var(--muted); font-style:italic;}
+  .pledge-buttons{display:flex; flex-direction:column; gap:10px; margin-top:18px;}
+  .pledge-buttons .btn-gold, .pledge-buttons .btn-ghost{width:100%; padding:13px 18px; font-size:14.5px;}
+
+  @media(max-width:600px){
+    .pledge-card{padding:24px 20px;}
+    .pledge-emoji{font-size:38px;}
+    .pledge-card h2{font-size:19px;}
+    header{flex-wrap:wrap;}
+    .feedback-btn{order:2;}
+
+    .wrap{padding:0 14px;}
+    .hero{padding:22px 0 26px;}
+    header{gap:10px; margin-bottom:14px;}
+    .logo-mark{width:38px; height:38px;}
+    .brand-text h1{font-size:20px;}
+    .hero-sub{font-size:13px;}
+    .draw-row{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:14px;}
+    .draw-card{min-width:0; width:auto; padding:11px 12px;}
+    .draw-label{font-size:10px; margin-bottom:5px;}
+    .countdown{font-size:14px; gap:4px;}
+    .countdown .seg .u{font-size:8px;}
+    .jackpot-figure{font-size:15px;}
+    .jackpot-note{font-size:10px; line-height:1.35;}
+
+    .balance-card{padding:18px 16px; flex-direction:column; align-items:flex-start; gap:14px;}
+    .mini-stats{width:100%; justify-content:space-between; gap:10px;}
+    .mini-stat{text-align:left;}
+    .simulate-row{justify-content:stretch;}
+    .simulate-row > div{width:100%;}
+    .simulate-row button{flex:1; width:auto !important;}
+    #realCheckStatus{text-align:left !important; max-width:none !important;}
+  }
+</style>
+</head>
+<body>
+  <div id="pledgeOverlay" class="pledge-overlay">
+    <div class="pledge-card">
+      <div class="pledge-emoji">🍀</div>
+      <h2>Before We Begin...</h2>
+      <p>This app can't buy real tickets, hold real money, or predict anything. It just makes picking numbers more fun.</p>
+      <p><strong>BUT</strong> — if you take a line generated here, buy an <em>actual</em> ticket with it, and it genuinely wins something life-changing... by tapping below you hereby pledge, on your honour as a good sport, to shout the developer a coffee ☕ (or a modest, entirely voluntary slice of the winnings 😇) as a thank-you.</p>
+      <p class="pledge-fine-print">No legal obligation. No fine print that matters. Just vibes and good karma.</p>
+      <div class="pledge-buttons">
+        <button class="btn-gold" id="pledgeAcceptBtn">I Solemnly Pledge 🤝</button>
+        <button class="btn-ghost" id="pledgeSkipBtn">Just Let Me In 👀</button>
+      </div>
+    </div>
+  </div>
+  <div class="hero">
+    <div class="wrap">
+      <header>
+        <div style="display:flex; align-items:center; gap:14px; flex:1;">
+          <svg class="logo-mark" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+            <defs><linearGradient id="bgGrad" x1="0" y1="0" x2="200" y2="200" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#7a3fa0"/><stop offset="1" stop-color="#4a1f68"/>
+            </linearGradient></defs>
+            <rect width="200" height="200" rx="46" fill="url(#bgGrad)"/>
+            <path d="M36 76 A96 96 0 0 1 168 52" stroke="#F5A93B" stroke-width="11" fill="none" stroke-linecap="round"/>
+            <circle cx="100" cy="112" r="54" fill="#F7F2E2"/>
+            <circle cx="163" cy="53" r="15" fill="#D9AF3E"/>
+            <path d="M163 30 L166 40 L176 43 L166 46 L163 56 L160 46 L150 43 L160 40 Z" fill="#F7F2E2"/>
+          </svg>
+          <div class="brand-text">
+            <h1>WouldaWon</h1>
+            <div class="tag">Powerball · Strike Tracker</div>
+          </div>
+        </div>
+        <a id="feedbackLink" href="#" class="feedback-btn">💬 Feedback</a>
+      </header>
+
+      <p class="hero-sub">Generate lines, "buy" them, and check them against the real Lotto NZ draw — on the real draw night, at the real time. Every combination has an equal chance every draw, no matter what's come up before.</p>
+      <p class="disclaimer">The ticket is always fake. Draw days, times and prize rules are real — including Powerball's new 14-ball format and Division 8, live from 13 September 2026. Results can be checked against a genuine draw ("Check real result") or a random one ("Simulate instead").</p>
+
+      <div class="draw-row">
+        <div class="draw-card">
+          <div class="draw-label">Next draw</div>
+          <div class="draw-date" id="nextDrawDate">Loading…</div>
+          <div class="countdown" id="countdown"></div>
+        </div>
+        <div class="draw-card">
+          <div class="draw-label">Powerball Division 1 — <span id="pbNextDrawDay">next draw</span></div>
+          <div class="jackpot-figure" id="pbJackpotFigure">Loading…</div>
+          <div class="jackpot-note" id="pbJackpotNote"></div>
+        </div>
+        <div class="draw-card">
+          <div class="draw-label">Strike 4 — <span id="strikeNextDrawDay">next draw</span></div>
+          <div class="jackpot-figure" id="strikeJackpotFigure">Loading…</div>
+          <div class="jackpot-note" id="strikeJackpotNote"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="balance-card">
+      <div>
+        <div class="balance-label">Net position</div>
+        <div class="balance-figure even" id="balanceFigure">$0.00</div>
+        <div class="balance-meta" id="balanceMeta">0 tickets bought · 0 draws checked</div>
+      </div>
+      <div class="mini-stats">
+        <div class="mini-stat"><div class="n" id="statSpent">$0.00</div><div class="l">Spent</div></div>
+        <div class="mini-stat"><div class="n" id="statWon">$0.00</div><div class="l">Won</div></div>
+        <div class="mini-stat"><div class="n" id="statBest">—</div><div class="l">Best result</div></div>
+      </div>
+      <div class="simulate-row" style="flex-direction:column; align-items:flex-end; gap:6px;">
+        <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
+          <button class="btn-simulate" id="checkRealBtn" style="background:var(--teal); color:#fff;" disabled>Check real result</button>
+          <button class="btn-simulate" id="simulateBtn" disabled>Simulate instead</button>
+        </div>
+        <div id="realCheckStatus" style="font-size:11px; color:var(--muted); text-align:right; max-width:340px; line-height:1.4;">"Check real result" looks up the result the owner has entered for this draw. "Simulate instead" uses a random result if it hasn't been entered yet.</div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="powerball"><span class="dot"></span>Powerball</button>
+      <button class="tab-btn" data-tab="strike"><span class="dot"></span>Strike</button>
+      <button class="tab-btn" data-tab="mytickets"><span class="dot"></span>My Tickets</button>
+      <button class="tab-btn" data-tab="recent"><span class="dot"></span>Recent draws</button>
+      <button class="tab-btn" data-tab="stats"><span class="dot"></span>Stats</button>
+    </div>
+
+    <div class="panel active" data-panel="powerball">
+      <div class="card">
+        <h2>Generate a Powerball line</h2>
+        <p class="card-sub">6 main numbers from 1–40, plus a Powerball number from 1–<span id="pbPoolMax">14</span> — the new, bigger pool live since 13 Sept 2026. Adding Powerball doubles the line price.</p>
+        <div class="ticket-for-note" id="ticketFor-powerball">This ticket will belong to: loading…</div>
+        <div class="mode-toggle">
+          <button class="mode-btn active" data-mode="random" data-game="powerball">Random</button>
+          <button class="mode-btn" data-mode="weighted" data-game="powerball">Hot/Cold weighted</button>
+        </div>
+        <div class="ball-row" id="genRow-powerball"><span class="placeholder-text">No line generated yet.</span></div>
+        <div class="btn-row">
+          <button class="btn btn-gold" data-action="generate" data-game="powerball">Generate line</button>
+          <button class="btn btn-ghost" data-action="buy" data-game="powerball" disabled>Buy this ticket</button>
+          <span class="price-tag">$1.50 / line (incl. Powerball)</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" data-panel="strike">
+      <div class="card">
+        <h2>Generate a Strike line</h2>
+        <p class="card-sub">Predict 4 numbers <strong>in the exact order</strong> they're drawn. Strike 4 jackpots start at $100,000 and roll to a $700,000 cap.</p>
+        <div class="ticket-for-note" id="ticketFor-strike">This ticket will belong to: loading…</div>
+        <div class="mode-toggle">
+          <button class="mode-btn active" data-mode="random" data-game="strike">Random</button>
+          <button class="mode-btn" data-mode="weighted" data-game="strike">Hot/Cold weighted</button>
+        </div>
+        <div class="ball-row" id="genRow-strike"><span class="placeholder-text">No line generated yet.</span></div>
+        <div class="btn-row">
+          <button class="btn btn-gold" data-action="generate" data-game="strike">Generate line</button>
+          <button class="btn btn-ghost" data-action="buy" data-game="strike" disabled>Buy this ticket</button>
+          <span class="price-tag">$1.00 / line</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" data-panel="mytickets">
+      <div class="card">
+        <h2>Tickets awaiting result</h2>
+        <p class="card-sub">Every ticket you've bought, waiting on its draw night.</p>
+        <div id="awaitingList"><div class="empty-note">No tickets bought yet.</div></div>
+      </div>
+      <div class="card">
+        <h2>Past tickets</h2>
+        <p class="card-sub">Your last 20 checked tickets — win or lose, numbers and all.</p>
+        <div id="historyList"><div class="empty-note">Nothing checked yet.</div></div>
+      </div>
+    </div>
+
+    <div class="panel" data-panel="recent">
+      <div class="card">
+        <h2>Recent draws — real results</h2>
+        <p class="card-sub">Genuine NZ Lotto results, entered by the owner via the admin portal — updates here the moment they're saved.</p>
+        <div id="recentDrawsList"></div>
+        <p class="source-note">For the very latest draw, check <a href="https://www.mylotto.co.nz" target="_blank" rel="noopener">mylotto.co.nz</a> directly.</p>
+      </div>
+    </div>
+
+    <div class="panel" data-panel="stats">
+      <div class="card">
+        <h2>5-year sample history</h2>
+        <p class="card-sub" id="statsRange">Loading sample dataset…</p>
+        <div class="stats-two-col">
+          <div>
+            <p class="card-sub" style="margin-bottom:10px;"><strong>Hot numbers</strong> — appeared most often</p>
+            <div class="freq-list" id="hotList"></div>
+          </div>
+          <div>
+            <p class="card-sub" style="margin-bottom:10px;"><strong>Cold numbers</strong> — appeared least often</p>
+            <div class="freq-list" id="coldList"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Ledger</h2>
+      <p class="card-sub">Every purchase and payout, most recent first.</p>
+      <div id="ledgerList"><div class="empty-note">Nothing recorded yet.</div></div>
+    </div>
+
+    <footer>Draw days, times and prize rules are real, including the new Powerball format live since 13 Sept 2026. The Stats tab is based on a 5-year sample of draw history. Your tickets and balance are saved automatically on this device. <a href="#" id="resetLink" style="color:var(--red);">Reset all saved data</a></footer>
+  </div>
+
+<script src="sample-history.js"></script>
+<script>
+(function(){
+  // ---------- Pricing (confirmed against Lotto NZ's own figures) ----------
+  const PRICE = { powerball: 1.50, strike: 1.00 };
+
+  // ---------- Dividend tables ----------
+  // LOTTO_DIVIDENDS still needed: Powerball tickets that miss the Powerball
+  // number but still match 3+ main numbers pay out at the plain Lotto rate.
+  const LOTTO_DIVIDENDS = {1:1000000,2:20000,3:601,4:55,5:30,6:22,7:0};
+
+  // Powerball's new format, live from 13 Sept 2026: pool is 1-14 (was 1-10),
+  // starting jackpot $5M (was $4M), cap $60M (was $50M), and a new Division 8
+  // (2 main numbers + Powerball) pays a fixed $12. Confirmed via Lotto NZ's
+  // own site and multiple news sources on the day this rule change went live.
+  const POWERBALL_POOL_MAX = 14;
+  const PB_DIVIDENDS = {1:5000000,2:100000,3:3000,4:300,5:100,6:50,7:20,8:12};
+
+  const STRIKE_DIVIDENDS = {4:100000,3:700,2:20,1:0};
+
+  // Recent draws, ticket-checking, and jackpot figures all read from
+  // official-results.json, fetched at startup. Updated via the admin portal
+  // (admin.html + the update-results function), which commits straight to
+  // this same file — so Recent Draws updates automatically the moment a
+  // result is saved there, no separate step needed.
+  let officialData = { draws: {}, upcomingJackpots: {} };
+
+  async function loadOfficialResults(){
+    try{
+      const res = await fetch('official-results.json?_=' + Date.now()); // cache-bust so updates show immediately
+      officialData = await res.json();
+    } catch(err){
+      console.warn('Could not load official-results.json — Recent Draws, real result checking, and jackpot figures will be empty.', err);
+    }
+  }
+
+  // ---------- Global ledger state ----------
+  let balance=0, spent=0, won=0, ticketsBought=0, drawsChecked=0, bestResult=null;
+  let ledger=[];
+  let pending = { powerball:[], strike:[] };
+  let history = []; // resolved tickets, most recent first, capped in storage
+  let currentLine = { powerball:null, strike:null };
+  let mode = { powerball:'random', strike:'random' };
+  let idCounter=1;
+  let activeDrawDate = null; // Date object (NZ wall-clock) tickets are currently being sold for
+  let livePBJackpot = null; // real fetched Powerball Division 1 amount, when known — null means "use the static fallback"
+
+  // ---------- Frequency model from sample history ----------
+  let freqMap = {};
+  let hotNumbers = [], coldNumbers = [];
+
+  function buildFrequency(){
+    for(let n=1;n<=40;n++) freqMap[n]=0;
+    (window.SAMPLE_LOTTO_HISTORY||[]).forEach(d=>{
+      d.main.forEach(n=>freqMap[n]++);
+      freqMap[d.bonus]++;
+    });
+    const sorted = Object.keys(freqMap).map(Number).sort((a,b)=>freqMap[b]-freqMap[a]);
+    hotNumbers = sorted.slice(0,12);
+    coldNumbers = sorted.slice(-12);
+  }
+
+  function weightedPool(weighted){
+    const pool=[];
+    for(let n=1;n<=40;n++){
+      let weight=1;
+      if(weighted){
+        if(hotNumbers.includes(n)) weight=3;
+        else if(coldNumbers.includes(n)) weight=0.4;
+      }
+      const copies=Math.max(1, Math.round(weight*4));
+      for(let c=0;c<copies;c++) pool.push(n);
+    }
+    return pool;
+  }
+
+  function drawSixPlusBonus(weighted){
+    const pool = weightedPool(weighted);
+    const main=new Set();
+    while(main.size<6){ main.add(pool[Math.floor(Math.random()*pool.length)]); }
+    const mainArr=Array.from(main).sort((a,b)=>a-b);
+    let bonus;
+    do{ bonus=Math.floor(Math.random()*40)+1; }while(main.has(bonus));
+    return {main:mainArr, bonus};
+  }
+  function drawPowerballNumber(){ return Math.floor(Math.random()*POWERBALL_POOL_MAX)+1; }
+  function drawStrikeOrder(weighted){
+    const pool = weightedPool(weighted);
+    const chosen=[];
+    while(chosen.length<4){
+      const pick=pool[Math.floor(Math.random()*pool.length)];
+      if(!chosen.includes(pick)) chosen.push(pick);
+    }
+    return chosen;
+  }
+
+  // ---------- Real NZ draw timing ----------
+  function nowNZ(){
+    return new Date(new Date().toLocaleString('en-US', { timeZone:'Pacific/Auckland' }));
+  }
+
+  function computeNextDraw(){
+    const n = nowNZ();
+    let d = new Date(n.getFullYear(), n.getMonth(), n.getDate(), 0,0,0);
+    for(let i=0;i<14;i++){
+      const day = d.getDay(); // Wed=3, Sat=6
+      if(day===3 || day===6){
+        const hour = 20;
+        const minute = day===3 ? 20 : 0;
+        const drawTime = new Date(d.getFullYear(), d.getMonth(), d.getDate(), hour, minute, 0);
+        if(drawTime > n) return drawTime;
+      }
+      d.setDate(d.getDate()+1);
+    }
+    return null;
+  }
+
+  function formatDrawLabel(d){
+    const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const hours24=d.getHours();
+    const ampm = hours24>=12 ? 'PM':'AM';
+    let h12 = hours24%12; if(h12===0) h12=12;
+    const mm = String(d.getMinutes()).padStart(2,'0');
+    return `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]}, ${h12}:${mm} ${ampm} NZT`;
+  }
+
+  function refreshDrawTiming(){
+    const n = nowNZ();
+    let nextDraw = computeNextDraw();
+
+    if(activeDrawDate === null){
+      activeDrawDate = nextDraw;
+    }
+
+    document.getElementById('nextDrawDate').textContent = formatDrawLabel(nextDraw);
+
+    const nextDrawDayName = nextDraw.getDay() === 3 ? 'Wed' : 'Sat';
+    const pbLabel = document.getElementById('pbNextDrawDay');
+    const strikeLabel = document.getElementById('strikeNextDrawDay');
+    if(pbLabel) pbLabel.textContent = `next draw (${nextDrawDayName})`;
+    if(strikeLabel) strikeLabel.textContent = `next draw (${nextDrawDayName})`;
+
+    const diff = nextDraw - n;
+    const cd = document.getElementById('countdown');
+    if(diff > 0){
+      const totalSec = Math.floor(diff/1000);
+      const days = Math.floor(totalSec/86400);
+      const hours = Math.floor((totalSec%86400)/3600);
+      const mins = Math.floor((totalSec%3600)/60);
+      const secs = totalSec%60;
+      cd.innerHTML = segHtml(days,'d') + segHtml(hours,'h') + segHtml(mins,'m') + segHtml(secs,'s');
+    } else {
+      cd.innerHTML = '<span style="font-family:Fredoka,sans-serif;">Draw night — results coming soon</span>';
+    }
+
+    ['powerball','strike'].forEach(g=>{
+      const el = document.getElementById('ticketFor-'+g);
+      if(el) el.textContent = 'This ticket will belong to: ' + formatDrawLabel(activeDrawDate);
+    });
+
+    const totalPending = pending.powerball.length + pending.strike.length;
+    const simBtn = document.getElementById('simulateBtn');
+    const realBtn = document.getElementById('checkRealBtn');
+    if(totalPending===0){
+      simBtn.disabled=true; simBtn.textContent='No tickets pending';
+      realBtn.disabled=true;
+    } else if(n < activeDrawDate){
+      simBtn.disabled=true; simBtn.textContent='Waiting for draw night';
+      realBtn.disabled=true;
+    } else {
+      simBtn.disabled=false; simBtn.textContent='Simulate instead';
+      realBtn.disabled=false;
+    }
+  }
+
+  function segHtml(val, unit){
+    return `<span class="seg"><span class="n">${String(val).padStart(2,'0')}</span><span class="u">${unit}</span></span>`;
+  }
+
+  function renderBalls(container, numbers, opts){
+    opts = opts || {};
+    container.innerHTML='';
+    numbers.forEach((n,i)=>{
+      const el=document.createElement('div');
+      el.className='ball' + (opts.extraClass ? ' '+opts.extraClass : '');
+      el.textContent=n;
+      container.appendChild(el);
+      setTimeout(()=>el.classList.add('show'), i*80);
+    });
+    if(opts.pb !== undefined){
+      const el=document.createElement('div');
+      el.className='ball pb';
+      el.textContent=opts.pb;
+      container.appendChild(el);
+      setTimeout(()=>el.classList.add('show'), numbers.length*80);
+    }
+  }
+
+  document.querySelectorAll('[data-action="generate"]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const game=btn.getAttribute('data-game');
+      const row=document.getElementById('genRow-'+game);
+      const buyBtn=document.querySelector('[data-action="buy"][data-game="'+game+'"]');
+      const weighted = mode[game]==='weighted';
+
+      if(game==='powerball'){
+        const draw=drawSixPlusBonus(weighted);
+        const pb=drawPowerballNumber();
+        currentLine.powerball={numbers:draw.main, pb:pb, mode:mode.powerball};
+        renderBalls(row, draw.main, {pb:pb});
+      } else if(game==='strike'){
+        const order=drawStrikeOrder(weighted);
+        currentLine.strike={order:order, mode:mode.strike};
+        renderBalls(row, order, {extraClass:'strike-pos'});
+      }
+      buyBtn.disabled=false;
+    });
+  });
+
+  document.querySelectorAll('.mode-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const game=btn.getAttribute('data-game');
+      const m=btn.getAttribute('data-mode');
+      mode[game]=m;
+      document.querySelectorAll('.mode-btn[data-game="'+game+'"]').forEach(b=>b.classList.toggle('active', b===btn));
+    });
+  });
+
+  document.querySelectorAll('[data-action="buy"]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const game=btn.getAttribute('data-game');
+      const line=currentLine[game];
+      if(!line) return;
+      const price=PRICE[game];
+      balance-=price; spent+=price; ticketsBought++;
+
+      const ticket={ id:idCounter++, boughtAt:new Date(), modeUsed:line.mode, drawDate:activeDrawDate };
+      if(game==='powerball'){ ticket.numbers=line.numbers; ticket.pb=line.pb; }
+      else if(game==='strike'){ ticket.order=line.order; }
+      pending[game].push(ticket);
+
+      addLedgerEntry(`${capitalize(game)} ticket bought for ${formatDrawLabel(activeDrawDate)}`, -price);
+
+      currentLine[game]=null;
+      document.getElementById('genRow-'+game).innerHTML='<span class="placeholder-text">No line generated yet.</span>';
+      btn.disabled=true;
+      renderAll();
+      saveState();
+    });
+  });
+
+  document.getElementById('simulateBtn').addEventListener('click', function(){
+    const totalPending = pending.powerball.length + pending.strike.length;
+    if(totalPending===0 || nowNZ() < activeDrawDate) return;
+    const btn=this;
+    btn.classList.add('rolling');
+    btn.disabled=true;
+
+    setTimeout(()=>{
+      btn.classList.remove('rolling');
+      const officialDraw = drawSixPlusBonus(false);
+      const officialPB = drawPowerballNumber();
+      const officialStrike = drawStrikeOrder(false);
+      resolveAgainstDraw(officialDraw.main, officialDraw.bonus, officialPB, officialStrike, 'Simulated (random)');
+    }, 650);
+  });
+
+  function formatISODate(d){
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+
+  document.getElementById('checkRealBtn').addEventListener('click', function(){
+    const totalPending = pending.powerball.length + pending.strike.length;
+    if(totalPending===0 || nowNZ() < activeDrawDate) return;
+    const status=document.getElementById('realCheckStatus');
+
+    const key = formatISODate(activeDrawDate);
+    const entry = (officialData.draws || {})[key];
+
+    if(!entry){
+      status.textContent = `No result entered yet for ${formatDrawLabel(activeDrawDate)}. Add it via the admin portal — or use "Simulate instead" for now.`;
+      return;
+    }
+
+    status.textContent = `Checked against the entered result for ${formatDrawLabel(activeDrawDate)}.`;
+    resolveAgainstDraw(entry.main, entry.bonus, entry.pb, entry.strike, `Official result (${key})`, entry.strike === null);
+  });
+
+  function resolveAgainstDraw(officialMain, officialBonus, officialPB, officialStrikeOrder, sourceLabel, skipStrike){
+    drawsChecked++;
+    const resolvedAt = new Date();
+
+    pending.powerball.forEach(ticket=>{
+      const mainMatches = ticket.numbers.filter(n=>officialMain.includes(n)).length;
+      const bonusMatch = ticket.numbers.includes(officialBonus);
+      const pbHit = ticket.pb === officialPB;
+      const division = matchPowerballDivision(mainMatches, bonusMatch, pbHit);
+      let amount=0, label='No win';
+      if(division){
+        if(division === 1 && livePBJackpot){
+          amount = livePBJackpot; // real fetched figure, not the static placeholder
+          label = 'Division 1 + Powerball 🎉';
+        } else {
+          amount = jitter(PB_DIVIDENDS[division], division===1);
+          label = division === 8 ? 'Division 8 (new!)' : `Division ${division} + Powerball`;
+        }
+      } else {
+        // Didn't hit the Powerball number, but might still have a plain Lotto-level win
+        const lottoDivision = matchLottoDivision(mainMatches, bonusMatch);
+        if(lottoDivision){ amount = jitter(LOTTO_DIVIDENDS[lottoDivision], false); label = `Division ${lottoDivision} (no Powerball)`; }
+      }
+      logResult('Powerball', label, amount);
+      recordHistory('powerball', ticket, label, amount, resolvedAt, {numbers:ticket.numbers, pb:ticket.pb, source:sourceLabel});
+    });
+
+    if(!skipStrike){
+      pending.strike.forEach(ticket=>{
+        let correct=0;
+        for(let i=0;i<4;i++){ if(ticket.order[i]===officialStrikeOrder[i]) correct++; }
+        const amount = STRIKE_DIVIDENDS[correct] || 0;
+        const label = correct>0 ? `Strike ${correct}` : 'No win';
+        logResult('Strike', label, amount);
+        recordHistory('strike', ticket, label, amount, resolvedAt, {order:ticket.order, source:sourceLabel});
+      });
+      pending.strike = [];
+    }
+
+    pending.powerball = [];
+    activeDrawDate = computeNextDraw();
+    renderAll();
+    saveState();
+  }
+
+  function recordHistory(game, ticket, label, amount, resolvedAt, numbersInfo){
+    history.unshift({
+      id: ticket.id, game, label, amount, won: amount > 0,
+      drawDate: ticket.drawDate, resolvedAt, modeUsed: ticket.modeUsed, ...numbersInfo
+    });
+    if(history.length > 100) history.length = 100;
+  }
+
+  function logResult(gameLabel, label, amount){
+    if(amount>0){
+      balance+=amount; won+=amount;
+      addLedgerEntry(`${gameLabel} draw result: ${label}`, amount);
+      if(!bestResult || amount>bestResult.amount) bestResult={label:`${gameLabel} ${label}`, amount};
+    } else {
+      addLedgerEntry(`${gameLabel} draw result: ${label}`, 0);
+    }
+  }
+
+  // Plain Lotto-level division (used as a fallback for Powerball tickets that
+  // miss the Powerball number but still match 3+ main numbers).
+  function matchLottoDivision(mainMatches, bonusMatch){
+    if(mainMatches===6) return 1;
+    if(mainMatches===5 && bonusMatch) return 2;
+    if(mainMatches===5) return 3;
+    if(mainMatches===4 && bonusMatch) return 4;
+    if(mainMatches===4) return 5;
+    if(mainMatches===3 && bonusMatch) return 6;
+    if(mainMatches===3) return 7;
+    return null;
+  }
+
+  // Powerball's own division ladder — new format live from 13 Sept 2026.
+  // Requires the Powerball number to hit; extends one tier further than plain
+  // Lotto (2 main matches + Powerball) via the new Division 8.
+  function matchPowerballDivision(mainMatches, bonusMatch, pbHit){
+    if(!pbHit) return null;
+    if(mainMatches===6) return 1;
+    if(mainMatches===5 && bonusMatch) return 2;
+    if(mainMatches===5) return 3;
+    if(mainMatches===4 && bonusMatch) return 4;
+    if(mainMatches===4) return 5;
+    if(mainMatches===3 && bonusMatch) return 6;
+    if(mainMatches===3) return 7;
+    if(mainMatches===2) return 8;
+    return null;
+  }
+
+  function jitter(base, isJackpot){
+    if(!base) return 0;
+    if(isJackpot) return base;
+    const factor=0.7+Math.random()*0.8;
+    return Math.round(base*factor*100)/100;
+  }
+
+  function addLedgerEntry(desc, amount){ ledger.unshift({desc, amount, ts:new Date()}); }
+  function capitalize(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
+
+  // ---------- Persistence (this browser, this device) ----------
+  const STORAGE_KEY = 'wouldawon-state-v2';
+
+  function saveState(){
+    try{
+      const payload = {
+        balance, spent, won, ticketsBought, drawsChecked, bestResult,
+        ledger: ledger.map(e => ({ desc:e.desc, amount:e.amount, ts:e.ts.toISOString() })),
+        pending: {
+          powerball: pending.powerball.map(t => ({...t, boughtAt:t.boughtAt.toISOString(), drawDate:t.drawDate ? t.drawDate.toISOString() : null})),
+          strike: pending.strike.map(t => ({...t, boughtAt:t.boughtAt.toISOString(), drawDate:t.drawDate ? t.drawDate.toISOString() : null}))
+        },
+        history: history.map(t => ({...t, drawDate:t.drawDate ? t.drawDate.toISOString() : null, resolvedAt:t.resolvedAt ? t.resolvedAt.toISOString() : null})),
+        activeDrawDate: activeDrawDate ? activeDrawDate.toISOString() : null,
+        idCounter
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    } catch(err){
+      console.warn('WouldaWon: could not save state locally', err);
+    }
+  }
+
+  function loadState(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return false;
+      const data = JSON.parse(raw);
+      balance = data.balance || 0;
+      spent = data.spent || 0;
+      won = data.won || 0;
+      ticketsBought = data.ticketsBought || 0;
+      drawsChecked = data.drawsChecked || 0;
+      bestResult = data.bestResult || null;
+      ledger = (data.ledger||[]).map(e => ({ desc:e.desc, amount:e.amount, ts:new Date(e.ts) }));
+      pending = {
+        powerball: (data.pending?.powerball||[]).map(t => ({...t, boughtAt:new Date(t.boughtAt), drawDate:t.drawDate ? new Date(t.drawDate) : null})),
+        strike: (data.pending?.strike||[]).map(t => ({...t, boughtAt:new Date(t.boughtAt), drawDate:t.drawDate ? new Date(t.drawDate) : null}))
+      };
+      history = (data.history||[]).map(t => ({...t, drawDate:t.drawDate ? new Date(t.drawDate) : null, resolvedAt:t.resolvedAt ? new Date(t.resolvedAt) : null}));
+      activeDrawDate = data.activeDrawDate ? new Date(data.activeDrawDate) : null;
+      idCounter = data.idCounter || 1;
+      return true;
+    } catch(err){
+      console.warn('WouldaWon: could not load saved state', err);
+      return false;
+    }
+  }
+
+  function resetState(){
+    if(!confirm('Clear all saved tickets, balance and ledger on this device? This cannot be undone.')) return;
+    localStorage.removeItem(STORAGE_KEY);
+    balance=0; spent=0; won=0; ticketsBought=0; drawsChecked=0; bestResult=null;
+    ledger=[]; pending={powerball:[],strike:[]}; history=[]; idCounter=1;
+    activeDrawDate = computeNextDraw();
+    renderAll();
+  }
+
+  function renderAwaitingList(){
+    const el = document.getElementById('awaitingList');
+    const all = [
+      ...pending.powerball.map(t => ({...t, game:'powerball'})),
+      ...pending.strike.map(t => ({...t, game:'strike'}))
+    ].sort((a,b) => a.boughtAt - b.boughtAt);
+
+    if(all.length===0){ el.innerHTML='<div class="empty-note">No tickets bought yet.</div>'; return; }
+    el.innerHTML = all.map(t=>{
+      let ballsHtml='';
+      if(t.game==='powerball'){ ballsHtml = t.numbers.map(n=>`<div class="ticket-ball">${n}</div>`).join('') + `<div class="ticket-ball pb">${t.pb}</div>`; }
+      else if(t.game==='strike'){ ballsHtml = t.order.map(n=>`<div class="ticket-ball">${n}</div>`).join(''); }
+      return `
+        <div class="ticket">
+          <div class="ticket-left">
+            <span class="game-tag ${t.game}">${t.game}</span>
+            <div class="ticket-balls">${ballsHtml}</div>
+            <div class="ticket-meta">${t.modeUsed==='weighted'?'Weighted':'Random'} · for ${formatDrawLabel(t.drawDate)}</div>
+          </div>
+          <div class="ticket-result pending">Awaiting draw</div>
+        </div>`;
+    }).join('');
+  }
+
+  function renderHistoryList(){
+    const el = document.getElementById('historyList');
+    if(history.length===0){ el.innerHTML='<div class="empty-note">Nothing checked yet.</div>'; return; }
+    el.innerHTML = history.slice(0,20).map(t=>{
+      let ballsHtml='';
+      if(t.game==='powerball'){ ballsHtml = t.numbers.map(n=>`<div class="ticket-ball">${n}</div>`).join('') + `<div class="ticket-ball pb">${t.pb}</div>`; }
+      else if(t.game==='strike'){ ballsHtml = t.order.map(n=>`<div class="ticket-ball">${n}</div>`).join(''); }
+      return `
+        <div class="ticket ${t.won?'won':'lost'}">
+          <div class="ticket-left">
+            <span class="game-tag ${t.game}">${t.game}</span>
+            <div class="ticket-balls">${ballsHtml}</div>
+            <div class="ticket-meta">${formatDrawLabel(t.drawDate)} · ${escapeHtml(t.source || 'Simulated')}</div>
+          </div>
+          <div class="ticket-result ${t.won?'win':'lose'}">${escapeHtml(t.label)}${t.amount>0?' · $'+t.amount.toFixed(2):''}</div>
+        </div>`;
+    }).join('');
+  }
+
+  function renderLedger(){
+    const el=document.getElementById('ledgerList');
+    if(ledger.length===0){ el.innerHTML='<div class="empty-note">Nothing recorded yet.</div>'; return; }
+    el.innerHTML = ledger.slice(0,50).map(e=>`
+      <div class="ledger-entry">
+        <div class="ledger-desc">${escapeHtml(e.desc)} · ${formatTime(e.ts)}</div>
+        <div class="ledger-amt ${e.amount>0?'pos':(e.amount<0?'neg':'')}">${e.amount===0?'—':(e.amount>0?'+':'')+'$'+e.amount.toFixed(2)}</div>
+      </div>`).join('');
+  }
+
+  function renderBalanceCard(){
+    const figure=document.getElementById('balanceFigure');
+    const meta=document.getElementById('balanceMeta');
+    const sign = balance>0?'+':(balance<0?'-':'');
+    figure.textContent = `${sign}$${Math.abs(balance).toFixed(2)}`;
+    figure.className = 'balance-figure pulse ' + (balance>0?'surplus':(balance<0?'deficit':'even'));
+    setTimeout(()=>figure.classList.remove('pulse'), 500);
+    meta.textContent = `${ticketsBought} ticket${ticketsBought===1?'':'s'} bought · ${drawsChecked} draw${drawsChecked===1?'':'s'} checked`;
+    document.getElementById('statSpent').textContent = `$${spent.toFixed(2)}`;
+    document.getElementById('statWon').textContent = `$${won.toFixed(2)}`;
+    document.getElementById('statBest').textContent = bestResult ? `${bestResult.label} · $${bestResult.amount.toFixed(2)}` : '—';
+  }
+
+  function renderAll(){
+    renderAwaitingList();
+    renderHistoryList();
+    renderLedger();
+    renderBalanceCard();
+    refreshDrawTiming();
+  }
+
+  function formatTime(d){ return d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'}); }
+  function escapeHtml(str){ const div=document.createElement('div'); div.textContent=str; return div.innerHTML; }
+
+  document.querySelectorAll('.tab-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const tab=btn.getAttribute('data-tab');
+      document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b===btn));
+      document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active', p.getAttribute('data-panel')===tab));
+    });
+  });
+
+  function renderStats(){
+    const history = window.SAMPLE_LOTTO_HISTORY || [];
+    const range = document.getElementById('statsRange');
+    if(history.length>0){
+      range.textContent = `${history.length} sample draws, ${history[0].date} to ${history[history.length-1].date} — used to power the hot/cold weighting.`;
+    } else {
+      range.textContent = 'Sample history could not be loaded.';
+    }
+    const sortedDesc = Object.keys(freqMap).map(Number).sort((a,b)=>freqMap[b]-freqMap[a]);
+    const maxCount = freqMap[sortedDesc[0]] || 1;
+    document.getElementById('hotList').innerHTML = sortedDesc.slice(0,10).map(n=>freqRowHtml(n, maxCount)).join('');
+    document.getElementById('coldList').innerHTML = sortedDesc.slice(-10).reverse().map(n=>freqRowHtml(n, maxCount)).join('');
+  }
+  function freqRowHtml(n, maxCount){
+    const pct = Math.round((freqMap[n]/maxCount)*100);
+    return `<div class="freq-row"><div class="freq-num">${n}</div><div class="freq-bar-bg"><div class="freq-bar" style="width:${pct}%"></div></div><div class="freq-count">${freqMap[n]}</div></div>`;
+  }
+
+  function renderRecentDraws(){
+    const el = document.getElementById('recentDrawsList');
+    const drawsObj = officialData.draws || {};
+    const dateKeys = Object.keys(drawsObj).sort().reverse().slice(0, 5);
+
+    if(dateKeys.length === 0){
+      el.innerHTML = '<div class="empty-note">No results entered yet — add some via the admin portal.</div>';
+      return;
+    }
+
+    el.innerHTML = dateKeys.map(key=>{
+      const d = drawsObj[key];
+      const displayDate = formatShortDate(key);
+      return `
+      <div class="recent-row">
+        <div>
+          <div class="recent-date">${displayDate}</div>
+          <div class="recent-balls">
+            ${d.main.map(n=>`<div class="ticket-ball">${n}</div>`).join('')}
+            <div class="ticket-ball" style="background:var(--gold); color:var(--ink);">${d.bonus}</div>
+            ${d.pb !== null && d.pb !== undefined ? `<div class="ticket-ball pb">${d.pb}</div>` : `<div class="ticket-meta" style="align-self:center;">PB not confirmed</div>`}
+          </div>
+          <div class="ticket-meta" style="margin-top:8px;">Strike:
+            ${d.strike ? `<span class="ticket-balls" style="display:inline-flex; gap:5px; vertical-align:middle; margin-left:4px;">
+              ${d.strike.map(n=>`<span class="ticket-ball" style="background:var(--teal-deep);">${n}</span>`).join('')}
+            </span>` : `<span style="font-style:italic;"> not confirmed for this draw</span>`}
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function formatShortDate(isoDate){
+    const d = new Date(isoDate + 'T12:00:00');
+    const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  }
+
+  function showPledgeModalIfNeeded(){
+    try{
+      if(sessionStorage.getItem('wouldawon-pledge-seen')) return;
+    } catch(err){}
+    document.getElementById('pledgeOverlay').classList.add('show');
+  }
+  function dismissPledgeModal(){
+    document.getElementById('pledgeOverlay').classList.remove('show');
+    try{ sessionStorage.setItem('wouldawon-pledge-seen', '1'); } catch(err){}
+  }
+  document.getElementById('pledgeAcceptBtn').addEventListener('click', dismissPledgeModal);
+  document.getElementById('pledgeSkipBtn').addEventListener('click', dismissPledgeModal);
+
+  function renderJackpotCard(){
+    const pbFigure = document.getElementById('pbJackpotFigure');
+    const pbNote = document.getElementById('pbJackpotNote');
+    const upcoming = officialData.upcomingJackpots || {};
+    const pb = upcoming.powerball;
+
+    if(pb && pb.amount){
+      livePBJackpot = pb.amount;
+      pbFigure.textContent = '$' + pb.amount.toLocaleString();
+      pbNote.textContent = `As entered by the owner, as of ${pb.asOf || 'an unspecified date'}. This is the real amount a Division 1 + Powerball win pays out below.`;
+    } else {
+      pbFigure.textContent = 'Not yet entered';
+      pbNote.innerHTML = `Add a figure via the admin portal. <a href="https://www.mylotto.co.nz" target="_blank" rel="noopener">Check mylotto.co.nz →</a>`;
+    }
+
+    const strikeFigure = document.getElementById('strikeJackpotFigure');
+    const strikeNote = document.getElementById('strikeJackpotNote');
+    const strike = upcoming.strike;
+
+    if(strike && strike.amount){
+      strikeFigure.textContent = '$' + strike.amount.toLocaleString();
+      strikeNote.textContent = `As entered by the owner, as of ${strike.asOf || 'an unspecified date'}.`;
+    } else {
+      strikeFigure.textContent = 'Not yet entered';
+      strikeNote.innerHTML = `Add a figure via the admin portal. <a href="https://www.mylotto.co.nz" target="_blank" rel="noopener">Check mylotto.co.nz →</a>`;
+    }
+  }
+
+  // ---------- Init ----------
+  document.getElementById('pbPoolMax').textContent = POWERBALL_POOL_MAX;
+  buildFrequency();
+  renderStats();
+  (async function(){
+    await loadOfficialResults();
+    renderRecentDraws();
+    renderJackpotCard();
+  })();
+  const restored = loadState();
+  if(!restored || !activeDrawDate){ activeDrawDate = computeNextDraw(); }
+  renderAll();
+  setInterval(refreshDrawTiming, 1000);
+  showPledgeModalIfNeeded();
+
+  document.getElementById('resetLink').addEventListener('click', (e)=>{
+    e.preventDefault();
+    resetState();
+  });
+
+  document.getElementById('feedbackLink').addEventListener('click', (e)=>{
+    e.preventDefault();
+    const subject = encodeURIComponent('WouldaWon feedback');
+    const body = encodeURIComponent('Hey Sagar,\n\nFeedback on WouldaWon:\n\n\n\n---\nSent from the app.');
+    window.location.href = `mailto:kapoorsagar.nz@gmail.com?subject=${subject}&body=${body}`;
+  });
+})();
+</script>
+</body>
+</html>
