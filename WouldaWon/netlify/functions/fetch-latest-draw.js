@@ -56,7 +56,10 @@ async function fetchNextJackpots() {
     const html = await fetchHtml('https://www.lotto.net/new-zealand-powerball/results/checker');
     const text = stripTags(html);
     // Expect something like: "Next Jackpot NZ$18 Million · Next Draw on Saturday"
-    const match = text.match(/Next Jackpot\s*NZ?\$?([\d,.]+)\s*(Million|Thousand)?/i);
+    // IMPORTANT: this page lists jackpots for multiple countries' lotteries side by
+    // side (confirmed by seeing an unrelated "$800 Million" figure on the same page).
+    // NZ$ must be required, not optional, or this can silently grab the wrong country's number.
+    const match = text.match(/Next Jackpot\s*NZ\$([\d,.]+)\s*(Million|Thousand)?/i);
     if(!match) return { error: 'Could not parse next-jackpot figure — page layout may have changed.' };
 
     const rawNum = parseFloat(match[1].replace(/,/g, ''));

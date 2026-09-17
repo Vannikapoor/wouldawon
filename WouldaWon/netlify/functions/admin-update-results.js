@@ -17,7 +17,12 @@
  * See README.md for exactly how to generate and set these safely.
  */
 
-const FILE_PATH = 'official-results.json';
+// The GitHub API works on real repo paths — it knows nothing about Netlify's
+// "Base directory" build setting. If your files live inside a subfolder in
+// the repo (e.g. WouldaWon/official-results.json, not just official-results.json
+// at the root), set GITHUB_FILE_PATH in Netlify env vars to that full path.
+// Defaults to root level if not set.
+const FILE_PATH = process.env.GITHUB_FILE_PATH || 'official-results.json';
 
 exports.handler = async function (event) {
   const headers = { 'Content-Type': 'application/json' };
@@ -59,16 +64,14 @@ exports.handler = async function (event) {
 
     // 2. Apply the update
     if (body.action === 'addDraw') {
-      const { date, main, bonus, pb, strike, jackpot, winners } = body.payload;
+      const { date, main, bonus, pb, strike } = body.payload;
       if (!date || !Array.isArray(main) || main.length !== 6) {
         return { statusCode: 400, headers, body: JSON.stringify({ error: 'A draw needs a date and exactly 6 main numbers.' }) };
       }
       currentContent.draws[date] = {
         main, bonus,
         pb: pb === undefined || pb === '' ? null : Number(pb),
-        strike: (Array.isArray(strike) && strike.length === 4) ? strike : null,
-        jackpot: Number(jackpot) || 0,
-        winners: Number(winners) || 0
+        strike: (Array.isArray(strike) && strike.length === 4) ? strike : null
       };
     } else if (body.action === 'updateJackpots') {
       const { powerballAmount, strikeAmount, asOf } = body.payload;

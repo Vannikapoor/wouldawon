@@ -60,8 +60,7 @@
 
       <div class="row3">
         <div><label>Bonus ball</label><input type="number" min="1" max="40" id="bonus"></div>
-        <div><label>Powerball (optional)</label><input type="number" min="1" max="10" id="pb"></div>
-        <div><label>Lotto jackpot $</label><input type="number" id="jackpot" placeholder="1000000"></div>
+        <div><label>Powerball (1–14, optional)</label><input type="number" min="1" max="14" id="pb"></div>
       </div>
 
       <label>Strike order (4 numbers, exact draw order — optional)</label>
@@ -69,9 +68,6 @@
         <input type="number" min="1" max="40" id="s1"><input type="number" min="1" max="40" id="s2">
         <input type="number" min="1" max="40" id="s3"><input type="number" min="1" max="40" id="s4">
       </div>
-
-      <label>Total winners (optional)</label>
-      <input type="number" id="winners" placeholder="e.g. 335913">
 
       <button id="submitDrawBtn">Save this draw</button>
       <div class="status" id="drawStatus"></div>
@@ -146,9 +142,7 @@
       main,
       bonus: Number(document.getElementById('bonus').value),
       pb: document.getElementById('pb').value,
-      strike,
-      jackpot: document.getElementById('jackpot').value,
-      winners: document.getElementById('winners').value
+      strike
     };
 
     if(!payload.date || main.length !== 6 || !payload.bonus){

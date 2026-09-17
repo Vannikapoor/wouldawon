@@ -1,18 +1,22 @@
 # WouldaWon
 
-A fun, honest Lotto / Powerball / Strike ticket simulator for NZ. Generate lines, "buy" them, simulate the next draw, and watch a running surplus/deficit ledger track how it's going.
+A fun, honest Powerball / Strike ticket simulator for NZ. Generate lines, "buy" them, check them against real draws, and watch a running surplus/deficit ledger track how it's going.
+
+**Lotto (the standalone game) was intentionally removed** — this app only tracks Powerball and Strike now. Note that Powerball still involves the same 6 main Lotto numbers internally (that's inherent to how Powerball works), it's just no longer offered as its own separate ticket type.
+
+**Powerball's rules changed on 13 September 2026** — this app is already built on the new format: pool of 1–14 (was 1–10), a new Division 8 (2 main numbers + Powerball, fixed $12), starting jackpot $5 million (was $4 million), cap $60 million (was $50 million).
 
 ## Files
 - `index.html` — the app itself. Vanilla HTML/CSS/JS, no build step, no framework.
 - `sample-history.js` — a **synthetic** 5-year (2021–2026) draw history used to power the Stats tab and the "hot/cold weighted" number generator. It's randomly generated, not real results — see below for how to replace it.
-- `scraper.js` — a documented scaffold for pulling **real** draw history from mylotto.co.nz. Needs a bit of setup on your end (see comments in the file) since it wasn't possible to build and test this against the live site from here.
+- `scraper.js` — an earlier, **superseded** attempt at pulling draw history automatically. Kept for reference only; real results now come through the admin portal instead (see below).
 - `logo.svg` — the app's logo as a standalone asset (also inlined directly in `index.html`).
 
 ## Running it
 Just open `index.html` in a browser, or drag the whole folder into Netlify (same deploy pattern as your other apps). `sample-history.js` needs to sit in the same folder as `index.html` — it's loaded via a `<script src="sample-history.js">` tag.
 
-## Going from sample data to real data
-The synthetic dataset exists because this environment has no internet access to actually scrape mylotto.co.nz for you — so `scraper.js` is a well-commented starting point, not a finished pipeline. Two honest ways to finish it, both explained inline in the file:
+## Going from sample data to real data (superseded — kept for history)
+This section describes an earlier approach that's no longer the recommended path. `scraper.js` was a scaffold for pulling real draw history from mylotto.co.nz — but that site renders as a JavaScript app with nothing to scrape, and third-party alternatives proved too fragile (see "What this replaces" below). Real results now come through the admin portal instead.
 
 1. **Find mylotto's underlying data endpoint** via your browser's DevTools Network tab (fastest once you locate it — mylotto.co.nz renders results client-side via JavaScript, so the raw HTML alone won't contain the numbers).
 2. **Render with a headless browser** (Puppeteer) if no clean API turns up.
@@ -59,7 +63,7 @@ If a draw hasn't been entered yet when a user clicks "Check real result" in the 
 - Ticket prices are real, confirmed against Lotto NZ's own figures: $0.70 Lotto, $1.50 Powerball (doubles the base line price), $1.00 Strike.
 - Draw days/times are real: Wednesdays 8:20pm NZT, Saturdays 8:00pm NZT. The countdown and "this ticket belongs to draw X" labelling run on genuine NZ time (`Pacific/Auckland`), not a fake clock.
 - The Recent Draws tab shows genuine historical results (with Powerball and Strike numbers included) as a manually-updated static snapshot — check mylotto.co.nz for anything newer than the dates shown.
-- Lotto Division 1's $1 million jackpot is fixed and real. Powerball and Strike jackpots shown in the hero cards are real snapshot figures too, dated to when they were last checked — not a live feed.
+- Powerball and Strike jackpots shown in the hero cards are real figures entered by the owner via the admin portal, dated to when they were last updated — not a live feed.
 - Both result buttons stay disabled until the real NZ draw time has passed. "Check real result" hits the live scraper function; "Simulate instead" generates a random result on the spot as a fallback.
 - Every division/prize rule (Lotto Div 1–7, Powerball boost, Strike 1–4) matches NZ Lotto's actual published rules — only the dollar amounts for anything below Division 1 are illustrative averages, and can differ a lot from real payouts since actual dividends depend on that draw's sales and winner count.
 - The weighted "hot/cold" generator is a fun feature, not a strategy — every line has equal odds every draw regardless of history. The app says so, and it's true.
